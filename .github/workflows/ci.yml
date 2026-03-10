@@ -1,0 +1,47 @@
+name: CCPP NUOPC CI
+
+on:
+  push:
+    branches: [ main, 'feat/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: jcsda/docker-gnu-openmpi-dev:1.9
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Build and Syntax Check
+      shell: bash
+      run: |
+        # Activate the Spack environment if present in the JCSDA container
+        if [ -f /opt/spack-environment/activate.sh ]; then
+          source /opt/spack-environment/activate.sh
+        fi
+
+        # Load necessary modules (Spack handles ESMF and CCPP in this stack)
+        if command -v spack &> /dev/null; then
+          spack load esmf || true
+          spack load ccpp-framework || true
+
+          ESMF_PATH=$(spack location -i esmf)
+          echo "ESMF installed at: $ESMF_PATH"
+          export CMAKE_PREFIX_PATH=$ESMF_PATH:$CMAKE_PREFIX_PATH
+        fi
+
+        echo "Verifying file existence and structure..."
+        ls -R src/
+
+        echo "Configuring and Building with CMake..."
+        mkdir build
+        cd build
+        # Pass CMAKE_PREFIX_PATH and enable verbose output
+        cmake .. -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH
+        make VERBOSE=1
+
+        echo "CI build complete via CMake."

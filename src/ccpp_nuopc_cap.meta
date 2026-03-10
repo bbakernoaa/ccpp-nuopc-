@@ -1,0 +1,64 @@
+# CCPP Metadata for CCPP_NUOPC_Cap
+# This file defines the host variables that the CCPP framework will use.
+
+[ccpp-arg-table]
+  name = CCPP_NUOPC_Cap
+  type = module
+
+[ccpp-arg-table]
+  name = air_temperature
+  standard_name = air_temperature
+  long_name = Air temperature
+  units = K
+  dimensions = (ncol, nlev)
+  type = real
+  kind = c_double
+  intent = inout
+
+[ccpp-arg-table]
+  name = air_pressure
+  standard_name = air_pressure
+  long_name = Air pressure
+  units = Pa
+  dimensions = (ncol, nlev)
+  type = real
+  kind = c_double
+  intent = inout
+
+[ccpp-arg-table]
+  name = specific_humidity
+  standard_name = specific_humidity
+  long_name = Specific humidity
+  units = kg/kg
+  dimensions = (ncol, nlev)
+  type = real
+  kind = c_double
+  intent = inout
+
+[ccpp-arg-table]
+  name = precipitation_rate
+  standard_name = precipitation_rate
+  long_name = Precipitation rate
+  units = kg/m^2/s
+  dimensions = (ncol, nlev)
+  type = real
+  kind = c_double
+  intent = inout
+
+[ccpp-arg-table]
+  name = ncol
+  standard_name = horizontal_loop_extent
+  long_name = Number of columns
+  units = count
+  type = integer
+  kind = c_int
+  intent = in
+
+[ccpp-arg-table]
+  name = nlev
+  standard_name = vertical_dimension
+  long_name = Number of vertical levels
+  units = count
+  type = integer
+  kind = c_int
+  intent = in
