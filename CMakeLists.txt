@@ -14,8 +14,8 @@ find_package(OpenMP REQUIRED)
 include(FetchContent)
 FetchContent_Declare(
     cdeps
-    GIT_REPOSITORY https://github.com/noaa-emc/cdeps
-    GIT_TAG        v0.12.1 # Pinning to a stable release
+    GIT_REPOSITORY https://github.com/ESCOMP/CDEPS
+    GIT_TAG        v0.12.0 # Pinning to a stable release
 )
 FetchContent_MakeAvailable(cdeps)
 
