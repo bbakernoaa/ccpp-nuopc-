@@ -9,33 +9,38 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: jcsda/docker-gnu-openmpi-dev:1.9
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gfortran libnetcdf-dev libnetcdff-dev
-
-    - name: Install ESMF
-      uses: esmf-org/install-esmf-action@v1
-      env:
-        ESMF_NETCDF: nc-config
-
     - name: Build and Syntax Check
+      shell: bash
       run: |
+        # Activate the Spack environment if present in the JCSDA container
+        if [ -f /opt/spack-environment/activate.sh ]; then
+          source /opt/spack-environment/activate.sh
+        fi
+
+        # Load necessary modules (Spack handles ESMF and CCPP in this stack)
+        if command -v spack &> /dev/null; then
+          spack load esmf || true
+          spack load ccpp-framework || true
+        fi
+
         echo "Verifying file existence and structure..."
         ls -R src/
 
         echo "Syntax check for internal state..."
-        # We need to include the ESMF module path which the action sets up
-        gfortran -fsyntax-only -I$ESMF_ROOT/mod src/ccpp_internal_state.F90
+        # In this container, gfortran and ESMF modules should be in the search path
+        # after loading the environment.
+        gfortran -fsyntax-only src/ccpp_internal_state.F90
 
         echo "Syntax check for NUOPC cap..."
-        # Note: NUOPC modules are also in the ESMF mod directory
-        gfortran -fsyntax-only -I$ESMF_ROOT/mod src/ccpp_nuopc_cap.F90
+        # We need the module from ccpp_internal_state.F90, so we compile it first.
+        gfortran -c src/ccpp_internal_state.F90
+        gfortran -fsyntax-only src/ccpp_nuopc_cap.F90
 
-        echo "CI workflow configured to monitor src/ directory."
+        echo "CI workflow configured to use JCSDA container."
