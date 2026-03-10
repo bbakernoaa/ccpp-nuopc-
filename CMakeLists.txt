@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 project(ccpp-nuopc LANGUAGES Fortran)
 
+# Add cmake directory to module path
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 # Find ESMF
 find_package(ESMF REQUIRED)
 

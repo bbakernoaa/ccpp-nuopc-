@@ -29,9 +29,13 @@ jobs:
           spack load esmf || true
           spack load ccpp-framework || true
 
-          # Diagnose: Find ESMF prefix
           ESMF_PATH=$(spack location -i esmf)
           echo "ESMF installed at: $ESMF_PATH"
+
+          # Search for ESMF CMake configuration files
+          find $ESMF_PATH -name "ESMFConfig.cmake" -o -name "esmf-config.cmake"
+
+          # Set CMAKE_PREFIX_PATH to the ESMF path
           export CMAKE_PREFIX_PATH=$ESMF_PATH:$CMAKE_PREFIX_PATH
         fi
 
@@ -41,6 +45,7 @@ jobs:
         echo "Configuring and Building with CMake..."
         mkdir build
         cd build
+        # Pass CMAKE_PREFIX_PATH explicitly
         cmake .. -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH
         make
 
