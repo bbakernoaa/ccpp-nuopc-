@@ -15,6 +15,7 @@ contains
 
     rc = ESMF_SUCCESS
 
+    ! Register NUOPC specialized methods
     call NUOPC_CompDerive(gcomp, NUOPC_SetServices, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg="NUOPC_CompDerive failed")) return
 
@@ -54,8 +55,8 @@ contains
     state%nlev = 50_c_int
 
     counts = (/ int(state%ncol), int(state%nlev) /)
-    state%grid = ESMF_GridCreateRectilinear(maxIndex=counts, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg="ESMF_GridCreateRectilinear failed")) then
+    state%grid = ESMF_GridCreate(maxIndex=counts, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg="ESMF_GridCreate failed")) then
        deallocate(state)
        return
     end if
@@ -71,8 +72,7 @@ contains
     call ccpp_init(state%ccpp_state, "my_physics_suite", ccpp_rc)
     if (ccpp_rc /= 0_c_int) then
       rc = ESMF_FAILURE
-      call ESMF_LogFoundError(rcToCheck=rc, msg="ccpp_init failed")
-      return
+      if (ESMF_LogFoundError(rcToCheck=rc, msg="ccpp_init failed")) return
     end if
 
   end subroutine InitializeP1
@@ -82,10 +82,10 @@ contains
     integer, intent(out) :: rc
     rc = ESMF_SUCCESS
 
-    call NUOPC_Advertise(gcomp, StandardName="air_temperature", StateKind=ESMF_STATE_IMPORT, rc=rc)
-    call NUOPC_Advertise(gcomp, StandardName="air_pressure", StateKind=ESMF_STATE_IMPORT, rc=rc)
-    call NUOPC_Advertise(gcomp, StandardName="specific_humidity", StateKind=ESMF_STATE_EXPORT, rc=rc)
-    call NUOPC_Advertise(gcomp, StandardName="precipitation_rate", StateKind=ESMF_STATE_EXPORT, rc=rc)
+    call NUOPC_Advertise(gcomp, StandardName="air_temperature", StateKind=ESMF_STATEKIND_IMPORT, rc=rc)
+    call NUOPC_Advertise(gcomp, StandardName="air_pressure", StateKind=ESMF_STATEKIND_IMPORT, rc=rc)
+    call NUOPC_Advertise(gcomp, StandardName="specific_humidity", StateKind=ESMF_STATEKIND_EXPORT, rc=rc)
+    call NUOPC_Advertise(gcomp, StandardName="precipitation_rate", StateKind=ESMF_STATEKIND_EXPORT, rc=rc)
   end subroutine Advertise
 
   subroutine Realize(gcomp, rc)
@@ -99,16 +99,16 @@ contains
     call ESMF_GridCompGetInternalState(gcomp, state, rc=rc)
 
     field = ESMF_FieldCreate(state%grid, typekind=ESMF_TYPEKIND_R8, name="air_temperature", rc=rc)
-    call NUOPC_Realize(gcomp, field=field, rc=rc)
+    call NUOPC_Realize(gcomp, "air_temperature", field=field, rc=rc)
 
     field = ESMF_FieldCreate(state%grid, typekind=ESMF_TYPEKIND_R8, name="air_pressure", rc=rc)
-    call NUOPC_Realize(gcomp, field=field, rc=rc)
+    call NUOPC_Realize(gcomp, "air_pressure", field=field, rc=rc)
 
     field = ESMF_FieldCreate(state%grid, typekind=ESMF_TYPEKIND_R8, name="specific_humidity", rc=rc)
-    call NUOPC_Realize(gcomp, field=field, rc=rc)
+    call NUOPC_Realize(gcomp, "specific_humidity", field=field, rc=rc)
 
     field = ESMF_FieldCreate(state%grid, typekind=ESMF_TYPEKIND_R8, name="precipitation_rate", rc=rc)
-    call NUOPC_Realize(gcomp, field=field, rc=rc)
+    call NUOPC_Realize(gcomp, "precipitation_rate", field=field, rc=rc)
   end subroutine Realize
 
   subroutine DataInitialize(gcomp, rc)
@@ -157,8 +157,7 @@ contains
 
     if (ccpp_rc /= 0_c_int) then
       rc = ESMF_FAILURE
-      call ESMF_LogFoundError(rcToCheck=rc, msg="ccpp_run failed")
-      return
+      if (ESMF_LogFoundError(rcToCheck=rc, msg="ccpp_run failed")) return
     end if
 
   end subroutine ModelAdvance
