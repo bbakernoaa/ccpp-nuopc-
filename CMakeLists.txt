@@ -16,6 +16,7 @@ FetchContent_Declare(
     cdeps
     GIT_REPOSITORY https://github.com/NOAA-EMC/CDEPS
     GIT_TAG        cdeps0.4.17 # Pinning to a stable release
+    GIT_SUBMODULES_RECURSIVE ON
 )
 
 FetchContent_GetProperties(cdeps)

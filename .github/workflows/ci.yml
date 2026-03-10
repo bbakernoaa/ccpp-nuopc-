@@ -37,13 +37,14 @@ jobs:
 
         echo "Starting jcsda/docker-gnu-openmpi-dev:1.9..."
         docker pull jcsda/docker-gnu-openmpi-dev:1.9
-        CONTAINER_ID=$(docker run -d --rm -v ${{ github.workspace }}:/app -w /app jcsda/docker-gnu-openmpi-dev:1.9 sleep infinity)
+        CONTAINER_ID=$(docker run -d --rm -u nonroot -v ${{ github.workspace }}:/app -w /app jcsda/docker-gnu-openmpi-dev:1.9 sleep infinity)
         echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV
 
     - name: Build and Syntax Check
       shell: bash
       run: |
         docker exec ${{ env.CONTAINER_ID }} /bin/bash -c "
+          export PATH=/opt/spack/bin:\$PATH &&
           source /opt/spack-environment/activate.sh &&
           spack load esmf ccpp-framework parallelio netcdf-c netcdf-fortran || true &&
 
