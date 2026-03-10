@@ -59,8 +59,9 @@ contains
 
     ! Allocate and set internal state
     allocate(state)
-    state%ncol = 100_c_int
-    state%nlev = 50_c_int
+    state%ncol = 100_kind_int
+    state%nlev = 50_kind_int
+    state%ncol_all = 100_kind_int
     call ESMF_GridCompSetInternalState(gcomp, state, rc=rc)
 
     call NUOPC_ModelGet(gcomp, importState=importState, exportState=exportState, rc=rc)
@@ -82,7 +83,7 @@ contains
     type(ESMF_State) :: importState, exportState
     type(ESMF_Field) :: field
     integer :: counts(2)
-    integer(c_int) :: ccpp_rc
+    integer(kind_int) :: ccpp_rc
 
     rc = ESMF_SUCCESS
     call ESMF_GridCompGetInternalState(gcomp, state, rc=rc)
@@ -112,6 +113,13 @@ contains
     ! Initialize CCPP framework
     call ccpp_init(state%ccpp_state, "my_physics_suite", ccpp_rc)
 
+    ! Initialize CCPP physics
+    call ccpp_physics_init(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
+    if (ccpp_rc /= 0_kind_int) then
+      rc = ESMF_FAILURE
+      return
+    end if
+
   end subroutine Realize
 
   subroutine DataInitialize(gcomp, rc)
@@ -128,7 +136,7 @@ contains
     type(ESMF_State) :: importState, exportState
     type(ESMF_Clock) :: clock
     type(ESMF_Field) :: field
-    integer(c_int) :: ccpp_rc
+    integer(kind_int) :: ccpp_rc
 
     rc = ESMF_SUCCESS
     call ESMF_GridCompGetInternalState(gcomp, state, rc=rc)
@@ -138,37 +146,30 @@ contains
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
 
-    ! 1. PRE-RUN: Map fields and Register with CCPP
-    call ccpp_field_add(state%ccpp_state, "horizontal_loop_extent", state%ncol, ccpp_rc)
-    call ccpp_field_add(state%ccpp_state, "vertical_dimension", state%nlev, ccpp_rc)
-
+    ! Map ESMF field pointers to internal state for CCPP access
     call ESMF_StateGet(importState, "air_temperature", field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, file=__FILE__)) return
     call ESMF_FieldGet(field, farrayPtr=state%temp, rc=rc)
-    call ccpp_field_add(state%ccpp_state, "air_temperature", state%temp, ccpp_rc)
-
     call ESMF_StateGet(importState, "air_pressure", field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, file=__FILE__)) return
     call ESMF_FieldGet(field, farrayPtr=state%pres, rc=rc)
-    call ccpp_field_add(state%ccpp_state, "air_pressure", state%pres, ccpp_rc)
-
     call ESMF_StateGet(exportState, "specific_humidity", field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, file=__FILE__)) return
     call ESMF_FieldGet(field, farrayPtr=state%q, rc=rc)
-    call ccpp_field_add(state%ccpp_state, "specific_humidity", state%q, ccpp_rc)
-
     call ESMF_StateGet(exportState, "precipitation_rate", field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, file=__FILE__)) return
     call ESMF_FieldGet(field, farrayPtr=state%rain, rc=rc)
-    call ccpp_field_add(state%ccpp_state, "precipitation_rate", state%rain, ccpp_rc)
 
-    ! 2. Execute CCPP Run
-    call ccpp_run(state%ccpp_state, "my_physics_suite", ccpp_rc)
-    if (ccpp_rc /= 0_c_int) then
+!> \section arg_table_CCPP_NUOPC_Cap Argument Table
+!! \htmlinclude CCPP_NUOPC_Cap.html
+!!
+
+    ! Execute CCPP Run phases
+    call ccpp_physics_timestep_init(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
+    if (ccpp_rc == 0_kind_int) then
+      call ccpp_physics_run(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
+    end if
+    if (ccpp_rc == 0_kind_int) then
+      call ccpp_physics_timestep_finalize(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
+    end if
+
+    if (ccpp_rc /= 0_kind_int) then
       rc = ESMF_FAILURE
       return
     end if
@@ -179,13 +180,14 @@ contains
     type(ESMF_GridComp)  :: gcomp
     integer, intent(out) :: rc
     type(ccpp_internal_state_type), pointer :: state
-    integer(c_int) :: ccpp_rc
+    integer(kind_int) :: ccpp_rc
 
     rc = ESMF_SUCCESS
     call ESMF_GridCompGetInternalState(gcomp, state, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
 
+    call ccpp_physics_finalize(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
     call ccpp_finalize(state%ccpp_state, ccpp_rc)
     call ESMF_GridDestroy(state%grid, rc=rc)
     deallocate(state)

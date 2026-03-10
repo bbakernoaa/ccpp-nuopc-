@@ -1,64 +1,57 @@
-# CCPP Metadata for CCPP_NUOPC_Cap
-# This file defines the host variables that the CCPP framework will use.
+[ccpp-table-properties]
+  name = CCPP_NUOPC_Cap
+  type = module
+  dependencies = ccpp_internal_state.F90
 
 [ccpp-arg-table]
   name = CCPP_NUOPC_Cap
   type = module
-
-[ccpp-arg-table]
-  name = air_temperature
+[air_temperature]
   standard_name = air_temperature
   long_name = Air temperature
   units = K
-  dimensions = (ncol, nlev)
+  dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = c_double
-  intent = inout
-
-[ccpp-arg-table]
-  name = air_pressure
+  kind = kind_phys
+[air_pressure]
   standard_name = air_pressure
   long_name = Air pressure
   units = Pa
-  dimensions = (ncol, nlev)
+  dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = c_double
-  intent = inout
-
-[ccpp-arg-table]
-  name = specific_humidity
+  kind = kind_phys
+[specific_humidity]
   standard_name = specific_humidity
   long_name = Specific humidity
   units = kg/kg
-  dimensions = (ncol, nlev)
+  dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = c_double
-  intent = inout
-
-[ccpp-arg-table]
-  name = precipitation_rate
+  kind = kind_phys
+[precipitation_rate]
   standard_name = precipitation_rate
   long_name = Precipitation rate
   units = kg/m^2/s
-  dimensions = (ncol, nlev)
+  dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
-  kind = c_double
-  intent = inout
-
-[ccpp-arg-table]
-  name = ncol
+  kind = kind_phys
+[ncol]
   standard_name = horizontal_loop_extent
-  long_name = Number of columns
+  long_name = Number of columns in current block
   units = count
+  dimensions = ()
   type = integer
-  kind = c_int
-  intent = in
-
-[ccpp-arg-table]
-  name = nlev
+  kind = kind_int
+[ncol_all]
+  standard_name = horizontal_dimension
+  long_name = Total number of columns
+  units = count
+  dimensions = ()
+  type = integer
+  kind = kind_int
+[nlev]
   standard_name = vertical_dimension
   long_name = Number of vertical levels
   units = count
+  dimensions = ()
   type = integer
-  kind = c_int
-  intent = in
+  kind = kind_int
