@@ -28,6 +28,9 @@ jobs:
         if command -v spack &> /dev/null; then
           spack load esmf || true
           spack load ccpp-framework || true
+          spack load parallelio || true
+          spack load netcdf-c || true
+          spack load netcdf-fortran || true
 
           ESMF_PATH=$(spack location -i esmf)
           echo "ESMF installed at: $ESMF_PATH"
