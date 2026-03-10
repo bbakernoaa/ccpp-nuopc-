@@ -28,19 +28,27 @@ jobs:
         if command -v spack &> /dev/null; then
           spack load esmf || true
           spack load ccpp-framework || true
+
+          # Diagnose: Find where ESMF is installed and its module files
+          ESMF_PATH=$(spack location -i esmf)
+          echo "ESMF installed at: $ESMF_PATH"
+          find $ESMF_PATH -name "esmf.mod"
+
+          # Set ESMF_INC for the compiler
+          ESMF_INC=$(find $ESMF_PATH -name "esmf.mod" -printf '%h\n' | head -n 1)
+          echo "ESMF include path: $ESMF_INC"
         fi
 
         echo "Verifying file existence and structure..."
         ls -R src/
 
         echo "Syntax check for internal state..."
-        # In this container, gfortran and ESMF modules should be in the search path
-        # after loading the environment.
-        gfortran -fsyntax-only src/ccpp_internal_state.F90
+        # Use the found include path
+        gfortran -fsyntax-only -I$ESMF_INC src/ccpp_internal_state.F90
 
         echo "Syntax check for NUOPC cap..."
         # We need the module from ccpp_internal_state.F90, so we compile it first.
-        gfortran -c src/ccpp_internal_state.F90
-        gfortran -fsyntax-only src/ccpp_nuopc_cap.F90
+        gfortran -c -I$ESMF_INC src/ccpp_internal_state.F90
+        gfortran -fsyntax-only -I$ESMF_INC src/ccpp_nuopc_cap.F90
 
-        echo "CI workflow configured to use JCSDA container."
+        echo "CI workflow configured to use JCSDA container with Spack location detection."
