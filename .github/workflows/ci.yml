@@ -9,67 +9,64 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: jcsda/docker-gnu-openmpi-dev:1.9
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
 
+    - name: Setup Docker and JCSDA Container
+      shell: bash
+      run: |
+        echo "Fixing Docker overlayfs whiteout issue..."
+        sudo systemctl stop docker containerd || true
+        sudo rm -rf /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/*
+        sudo systemctl start containerd
+
+        sudo apt-get update
+        sudo apt-get install -y fuse-overlayfs
+        echo '{ "storage-driver": "fuse-overlayfs" }' | sudo tee /etc/docker/daemon.json
+        sudo systemctl restart docker
+
+        sudo apt-get install -y ca-certificates curl gnupg
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyrings/docker.asc > /dev/null
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install -y docker-ce docker-ce-cli
+
+        echo "Starting jcsda/docker-gnu-openmpi-dev:1.9..."
+        docker pull jcsda/docker-gnu-openmpi-dev:1.9
+        CONTAINER_ID=$(docker run -d --rm -v ${{ github.workspace }}:/app -w /app jcsda/docker-gnu-openmpi-dev:1.9 sleep infinity)
+        echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV
+
     - name: Build and Syntax Check
       shell: bash
       run: |
-        # Activate the Spack environment if present in the JCSDA container
-        if [ -f /opt/spack-environment/activate.sh ]; then
-          source /opt/spack-environment/activate.sh
-        fi
+        docker exec ${{ env.CONTAINER_ID }} /bin/bash -c "
+          source /opt/spack-environment/activate.sh &&
+          spack load esmf ccpp-framework parallelio netcdf-c netcdf-fortran || true &&
 
-        # Load necessary modules (Spack handles ESMF and CCPP in this stack)
-        if command -v spack &> /dev/null; then
-          spack load esmf || true
-          spack load ccpp-framework || true
-          spack load parallelio || true
-          spack load netcdf-c || true
-          spack load netcdf-fortran || true
+          ESMF_PATH=\$(spack location -i esmf) &&
+          PIO_PATH=\$(spack location -i parallelio) &&
+          NETCDF_C_PATH=\$(spack location -i netcdf-c) &&
+          NETCDF_FORTRAN_PATH=\$(spack location -i netcdf-fortran) &&
 
-          ESMF_PATH=$(spack location -i esmf)
-          echo "ESMF installed at: $ESMF_PATH"
-          export CMAKE_PREFIX_PATH=$ESMF_PATH:$CMAKE_PREFIX_PATH
+          export CMAKE_PREFIX_PATH=\$ESMF_PATH:\$PIO_PATH:\$NETCDF_C_PATH:\$NETCDF_FORTRAN_PATH:\$CMAKE_PREFIX_PATH &&
 
-          PIO_PATH=$(spack location -i parallelio)
-          echo "PIO installed at: $PIO_PATH"
-          export CMAKE_PREFIX_PATH=$PIO_PATH:$CMAKE_PREFIX_PATH
+          ESMFMKFILE=\$(find /opt/software -name 'esmf.mk' | head -n 1) &&
+          if [ -f \"\$ESMFMKFILE\" ]; then
+            PIO_INCLUDE=\$(grep 'ESMF_PIO_INCLUDE' \"\$ESMFMKFILE\" | cut -d'=' -f2 | xargs echo)
+            if [ -n \"\$PIO_INCLUDE\" ]; then
+               PIO_ROOT=\$(dirname \"\$PIO_INCLUDE\")
+               export PIO_DIR=\$PIO_ROOT
+               export CMAKE_PREFIX_PATH=\$PIO_ROOT:\$CMAKE_PREFIX_PATH
+            fi
+          fi &&
 
-          NETCDF_C_PATH=$(spack location -i netcdf-c)
-          echo "NetCDF-C installed at: $NETCDF_C_PATH"
-          export CMAKE_PREFIX_PATH=$NETCDF_C_PATH:$CMAKE_PREFIX_PATH
-
-          NETCDF_FORTRAN_PATH=$(spack location -i netcdf-fortran)
-          echo "NetCDF-Fortran installed at: $NETCDF_FORTRAN_PATH"
-          export CMAKE_PREFIX_PATH=$NETCDF_FORTRAN_PATH:$CMAKE_PREFIX_PATH
-        fi
-
-        # Leverage ESMFMKFILE to find PIO_ROOT if available
-        ESMFMKFILE=$(find /opt/software -name "esmf.mk" | head -n 1)
-        if [ -f "$ESMFMKFILE" ]; then
-          echo "Found ESMFMKFILE: $ESMFMKFILE"
-          PIO_INCLUDE=$(grep "ESMF_PIO_INCLUDE" "$ESMFMKFILE" | cut -d'=' -f2 | xargs echo)
-          if [ -n "$PIO_INCLUDE" ]; then
-             PIO_ROOT=$(dirname "$PIO_INCLUDE")
-             echo "Derived PIO_ROOT from ESMFMKFILE: $PIO_ROOT"
-             export PIO_DIR=$PIO_ROOT
-             export CMAKE_PREFIX_PATH=$PIO_ROOT:$CMAKE_PREFIX_PATH
-          fi
-        fi
-
-        echo "Verifying file existence and structure..."
-        ls -R src/
-
-        echo "Configuring and Building with CMake..."
-        mkdir build
-        cd build
-        # Pass CMAKE_PREFIX_PATH and enable verbose output
-        cmake .. -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH
-        make VERBOSE=1
-
-        echo "CI build complete via CMake."
+          mkdir -p build &&
+          cd build &&
+          cmake .. -DCMAKE_PREFIX_PATH=\$CMAKE_PREFIX_PATH &&
+          make VERBOSE=1
+        "
+        echo "CI build complete via Docker exec."
