@@ -1,9 +1,6 @@
 module ccpp_internal_state_mod
   use ESMF
   use, intrinsic :: iso_c_binding
-  ! In a real system, these would be the actual CCPP modules:
-  ! use ccpp_types, only: ccpp_t
-  ! use ccpp_framework, only: ccpp_init, ccpp_run, ccpp_finalize, ccpp_field_add
   implicit none
 
   ! Preprocessor-guarded mock for standalone development/CI
@@ -18,7 +15,6 @@ module ccpp_internal_state_mod
     type(ESMF_Grid) :: grid
 
     ! Data arrays (pointers to ESMF field memory)
-    ! Using c_double for consistency with CCPP requirements
     real(c_double), pointer :: temp(:,:) => null()
     real(c_double), pointer :: pres(:,:) => null()
     real(c_double), pointer :: q(:,:) => null()
@@ -42,8 +38,6 @@ module ccpp_internal_state_mod
   end interface
 
 contains
-  ! Implement mocks to avoid linker errors.
-  ! These provide the implicit interfaces needed for the module procedures.
   subroutine ccpp_init(ccpp_state, suite, rc)
     type(ccpp_t), intent(inout) :: ccpp_state
     character(*), intent(in)    :: suite
