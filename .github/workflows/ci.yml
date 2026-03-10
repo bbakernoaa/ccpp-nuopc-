@@ -28,6 +28,11 @@ jobs:
         if command -v spack &> /dev/null; then
           spack load esmf || true
           spack load ccpp-framework || true
+
+          # Diagnose: Find ESMF prefix
+          ESMF_PATH=$(spack location -i esmf)
+          echo "ESMF installed at: $ESMF_PATH"
+          export CMAKE_PREFIX_PATH=$ESMF_PATH:$CMAKE_PREFIX_PATH
         fi
 
         echo "Verifying file existence and structure..."
@@ -36,9 +41,7 @@ jobs:
         echo "Configuring and Building with CMake..."
         mkdir build
         cd build
-        # We assume the JCSDA container has a recent CMake and that find_package(ESMF) works.
-        # ESMF paths are usually handled by the ESMFMKFILE or the Spack load.
-        cmake ..
+        cmake .. -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH
         make
 
         echo "CI build and syntax check complete via CMake."
