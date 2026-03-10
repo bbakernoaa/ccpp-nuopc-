@@ -11,42 +11,65 @@ find_package(ESMF REQUIRED)
 find_package(OpenMP REQUIRED)
 
 # Check if CDEPS is already available (e.g. via Spack)
-find_package(cdeps QUIET)
+find_package(CDEPS QUIET)
 
-if(NOT cdeps_FOUND)
+if(NOT CDEPS_FOUND)
+    message(STATUS "CDEPS not found on system, attempting to build from source using FetchContent...")
+
+    # Discovery PIO and NetCDF from ESMF if possible
+    function(find_root_by_file root_var filename)
+        if(NOT ${root_var})
+            foreach(lib ${ESMF_LIBRARIES})
+                if(lib MATCHES "^-L(.*)")
+                    set(search_path "${CMAKE_MATCH_1}")
+                    if(EXISTS "${search_path}/../include/${filename}")
+                        set(root "${search_path}/..")
+                        get_filename_component(root "${root}" ABSOLUTE)
+                        set(${root_var} "${root}" PARENT_SCOPE)
+                        message(STATUS "Found ${root_var} from ESMF path: ${root}")
+                        return()
+                    endif()
+                endif()
+            endforeach()
+        endif()
+    endfunction()
+
+    find_root_by_file(PIO_ROOT "pio.h")
+
+    if(PIO_ROOT)
+        set(PIO_FOUND TRUE)
+        set(PIO_PATH "${PIO_ROOT}")
+        set(ENV{PIO_PATH} "${PIO_ROOT}")
+        set(ENV{PIO_ROOT} "${PIO_ROOT}")
+    endif()
+
     # Fallback to FetchContent if not found in the environment
     include(FetchContent)
     FetchContent_Declare(
         cdeps
-        GIT_REPOSITORY https://github.com/NOAA-EMC/CDEPS
-        GIT_TAG        cdeps0.4.17
+        GIT_REPOSITORY https://github.com/bbakernoaa/CDEPS.git
+        GIT_TAG        ae5d2c457321ebae3a0d9c9c949f871bb8f2b09c
         GIT_SUBMODULES_RECURSIVE ON
-        # Prevents attempts to update the repository if it's already there
-        UPDATE_DISCONNECTED ON
+        PATCH_COMMAND bash -c " \
+            sed -i 's/add_subdirectory(fox)/#add_subdirectory(fox)/' CMakeLists.txt; \
+            find . -name CMakeLists.txt -exec sed -i 's/install(/#install(/g' {} +; \
+        "
     )
 
-    # Use ESMFMKFILE to find PIO if available in the environment
-        if(DEFINED ENV{ESMFMKFILE} AND NOT PIO_PATH)
-            execute_process(COMMAND grep "^[ \t]*ESMF_PIO_INCLUDE[ \t]*=" $ENV{ESMFMKFILE}
-                            COMMAND cut -d= -f2
-                            OUTPUT_VARIABLE PIO_INC_DIR
-                            OUTPUT_STRIP_TRAILING_WHITESPACE)
-            if(PIO_INC_DIR)
-                # Remove leading whitespace and possible -I prefix
-                string(REGEX REPLACE "^[ \t\-I]+" "" PIO_INC_DIR "${PIO_INC_DIR}")
-                string(STRIP "${PIO_INC_DIR}" PIO_INC_DIR)
-                # Use only the first line if multiple matches found
-                string(REGEX REPLACE "\n.*$" "" PIO_INC_DIR "${PIO_INC_DIR}")
-
-                if(EXISTS "${PIO_INC_DIR}")
-                    get_filename_component(PIO_ROOT "${PIO_INC_DIR}" DIRECTORY)
-                    set(PIO_PATH "${PIO_ROOT}" CACHE PATH "PIO installation path" FORCE)
-                    message(STATUS "Derived PIO_PATH from ESMFMKFILE: ${PIO_PATH}")
-                endif()
-            endif()
-        endif()
+    # Force CDEPS flags
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -ffree-line-length-none -DCPRGNU" CACHE STRING "Fortran flags" FORCE)
+    set(DISABLE_FoX ON CACHE BOOL "Disable FoX library" FORCE)
+    set(COMPILER "gnu" CACHE STRING "Compiler type")
 
     FetchContent_MakeAvailable(cdeps)
+
+    if(TARGET dshr)
+        set(CDEPS_FOUND TRUE)
+        # Ensure CDEPS can find ESMF modules
+        target_include_directories(streams PRIVATE ${ESMF_INCLUDE_DIRS})
+        target_include_directories(dshr PRIVATE ${ESMF_INCLUDE_DIRS})
+        target_include_directories(cdeps_share PRIVATE ${ESMF_INCLUDE_DIRS})
+    endif()
 
     # Ensure FindPIO.cmake from CDEPS is available
     list(APPEND CMAKE_MODULE_PATH "${cdeps_SOURCE_DIR}/cmake")

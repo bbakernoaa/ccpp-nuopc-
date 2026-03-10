@@ -16,6 +16,17 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Cache dependencies and build
+      uses: actions/cache@v3
+      with:
+        path: |
+          build/_deps
+          build/lib
+          build/bin
+        key: ${{ runner.os }}-ccpp-deps-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-ccpp-deps-
+
     - name: Build and Syntax Check
       shell: bash
       run: |
