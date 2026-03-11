@@ -52,3 +52,9 @@
   units = count
   dimensions = ()
   type = integer
+[ccpp_state]
+  standard_name = ccpp_t_instance
+  long_name = ccpp handle member
+  units = DDT
+  dimensions = ()
+  type = ccpp_t
