@@ -26,6 +26,9 @@ def patch_cdeps(cdeps_src):
                 # Replace usage of ESMF_F90COMPILEPATHS with ESMF_INCLUDE_DIRS
                 content = content.replace('${ESMF_F90COMPILEPATHS}', '${ESMF_INCLUDE_DIRS}')
 
+                # Fix incorrect include directory for standalone build in components
+                content = content.replace('${CMAKE_BINARY_DIR}/share', '${CMAKE_CURRENT_BINARY_DIR}/../share')
+
                 with open(fpath, 'w') as f:
                     f.write(content)
 
@@ -55,21 +58,23 @@ def patch_cdeps(cdeps_src):
         with open(share_cmake, 'w') as f:
             f.write(content)
 
-    # Patch streams/CMakeLists.txt to link ESMF
+    # Patch streams/CMakeLists.txt to link ESMF and fix include
     streams_cmake = os.path.join(cdeps_src, 'streams', 'CMakeLists.txt')
     if os.path.exists(streams_cmake):
         with open(streams_cmake, 'r') as f:
             content = f.read()
+        content = content.replace('${CMAKE_BINARY_DIR}/share', '${CMAKE_CURRENT_BINARY_DIR}/../share')
         if 'target_link_libraries(streams' not in content:
             content += '\ntarget_link_libraries(streams PUBLIC ESMF::ESMF)\n'
         with open(streams_cmake, 'w') as f:
             f.write(content)
 
-    # Patch dshr/CMakeLists.txt to link ESMF
+    # Patch dshr/CMakeLists.txt to link ESMF and fix include
     dshr_cmake = os.path.join(cdeps_src, 'dshr', 'CMakeLists.txt')
     if os.path.exists(dshr_cmake):
         with open(dshr_cmake, 'r') as f:
             content = f.read()
+        content = content.replace('${CMAKE_BINARY_DIR}/share', '${CMAKE_CURRENT_BINARY_DIR}/../share')
         if 'target_link_libraries(dshr' not in content:
             content += '\ntarget_link_libraries(dshr PUBLIC ESMF::ESMF)\n'
         with open(dshr_cmake, 'w') as f:

@@ -111,6 +111,9 @@ contains
     type(ccpp_internal_state_type), pointer :: state
     type(ESMF_State) :: importState, exportState
     type(ESMF_Field) :: field
+    type(ESMF_Clock) :: clock
+    type(ESMF_VM)    :: vm
+    integer :: mytask
     integer :: counts(2)
     integer(kind_int) :: ccpp_rc
 
@@ -155,9 +158,6 @@ contains
     end if
 
     ! Get clock and VM from component
-    type(ESMF_Clock) :: clock
-    type(ESMF_VM)    :: vm
-    integer :: mytask
     call ESMF_GridCompGet(gcomp, clock=clock, vm=vm, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return

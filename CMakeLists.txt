@@ -74,6 +74,7 @@ if(NOT CDEPS_FOUND)
 
     if(TARGET dshr)
         set(CDEPS_FOUND TRUE)
+        # Ensure CDEPS can find ESMF modules
         target_include_directories(cdeps_share PUBLIC ${ESMF_INCLUDE_DIRS})
         target_include_directories(streams PUBLIC ${ESMF_INCLUDE_DIRS})
         target_include_directories(dshr PUBLIC ${ESMF_INCLUDE_DIRS})
@@ -90,6 +91,8 @@ add_library(ccpp_nuopc_cap src/ccpp_nuopc_cap.F90 src/ccpp_inline_cdeps_mod.F90)
 target_link_libraries(ccpp_nuopc_cap PUBLIC ccpp_internal_state ESMF::ESMF cdeps_share streams dshr)
 target_include_directories(ccpp_nuopc_cap PUBLIC ${ESMF_INCLUDE_DIRS})
 target_include_directories(ccpp_nuopc_cap PUBLIC ${cdeps_SOURCE_DIR}/share ${cdeps_SOURCE_DIR}/streams ${cdeps_SOURCE_DIR}/dshr)
+# Add binary directories for generated modules
+target_include_directories(ccpp_nuopc_cap PUBLIC ${cdeps_BINARY_DIR}/share ${cdeps_BINARY_DIR}/streams ${cdeps_BINARY_DIR}/dshr)
 
 # Prepare for CCPP submodules
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/ccpp-framework/CMakeLists.txt")
