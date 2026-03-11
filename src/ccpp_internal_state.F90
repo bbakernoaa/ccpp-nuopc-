@@ -22,6 +22,7 @@ module ccpp_internal_state_mod
   type ccpp_internal_state_type
     ! ESMF-related
     type(ESMF_Grid) :: grid
+    type(ESMF_Mesh) :: mesh
 
     ! Data arrays (pointers to ESMF field memory)
     real(kind_phys), pointer :: temp(:,:) => null()

@@ -125,6 +125,13 @@ contains
     ! Create grid
     counts = (/ int(state%ncol), int(state%nlev) /)
     state%grid = ESMF_GridCreate(maxIndex=counts, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=__FILE__)) return
+
+    ! Create mesh for CDEPS integration
+    state%mesh = ESMF_MeshCreate(parametricDim=1, spatialDim=1, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=__FILE__)) return
 
     call NUOPC_ModelGet(gcomp, importState=importState, exportState=exportState, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -163,7 +170,7 @@ contains
       line=__LINE__, file=__FILE__)) return
 
     ! Initialize inline CDEPS
-    call ccpp_inline_init(gcomp, clock, state%grid, mytask, rc)
+    call ccpp_inline_init(gcomp, clock, state%mesh, mytask, rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
 
@@ -176,7 +183,6 @@ contains
   end subroutine DataInitialize
 
   subroutine ModelAdvance(gcomp, rc)
-    use omp_lib
     type(ESMF_GridComp)  :: gcomp
     integer, intent(out) :: rc
 
@@ -209,18 +215,11 @@ contains
 !! \htmlinclude CCPP_NUOPC_Cap.html
 !!
 
-    ! Execute CCPP Run phases with OpenMP threading
+    ! Execute CCPP Run phases
     call ccpp_physics_timestep_init(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
     if (ccpp_rc == 0_kind_int) then
-      !$omp parallel private(thrd_no, ccpp_rc)
-      thrd_no = omp_get_thread_num() + 1
-      ! Note: in a real implementation, each thread would operate on a unique block
-      ! and have its own ccpp_t handle to avoid race conditions.
-      ! Here we set the thread ID and call run, assuming ccpp_physics_run
-      ! is thread-safe or handles the thread-local state internally.
-      call ccpp_physics_run(state%ccpp_state, suite_name="my_physics_suite", &
-        thrd_no=int(thrd_no, kind_int), ierr=ccpp_rc)
-      !$omp end parallel
+      ! For now, call physics serially to ensure correctness and avoid race conditions
+      call ccpp_physics_run(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
     end if
     if (ccpp_rc == 0_kind_int) then
       call ccpp_physics_timestep_finalize(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
@@ -252,6 +251,7 @@ contains
     call ccpp_physics_finalize(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
     call ccpp_finalize(state%ccpp_state, ccpp_rc)
     call ESMF_GridDestroy(state%grid, rc=rc)
+    call ESMF_MeshDestroy(state%mesh, rc=rc)
     deallocate(state)
   end subroutine Finalize
 

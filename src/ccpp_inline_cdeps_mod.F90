@@ -3,7 +3,7 @@ module ccpp_inline_cdeps_mod
   use NUOPC , only: NUOPC_CompAttributeGet
   use ESMF , only: ESMF_GridComp, ESMF_Grid, ESMF_Mesh
   use ESMF , only: ESMF_Clock, ESMF_Time, ESMF_TimeGet, ESMF_ClockGet
-  use ESMF , only: ESMF_KIND_R8, ESMF_SUCCESS, ESMF_LogFoundError
+  use ESMF , only: ESMF_KIND_R8, ESMF_SUCCESS, ESMF_FAILURE, ESMF_LogFoundError
   use ESMF , only: ESMF_LOGERR_PASSTHRU, ESMF_LOGMSG_INFO, ESMF_LOGWRITE
   use ESMF , only: ESMF_END_ABORT, ESMF_Finalize, ESMF_MAXSTR
 
@@ -27,10 +27,10 @@ module ccpp_inline_cdeps_mod
 
 contains
 
-  subroutine ccpp_inline_init(gcomp, model_clock, model_grid, mytask, rc)
+  subroutine ccpp_inline_init(gcomp, model_clock, model_mesh, mytask, rc)
     type(ESMF_GridComp) , intent(in) :: gcomp
     type(ESMF_Clock)    , intent(in) :: model_clock
-    type(ESMF_Grid)     , intent(in) :: model_grid
+    type(ESMF_Mesh)     , intent(in) :: model_mesh
     integer             , intent(in) :: mytask
     integer             , intent(out) :: rc
 
@@ -99,7 +99,7 @@ contains
         logunit = logunit, &
         compname = 'CCPP', &
         model_clock = model_clock, &
-        model_grid = model_grid, &
+        model_mesh = model_mesh, &
         stream_name = trim(stream_name), &
         stream_meshfile = trim(sdatconfig%stream(ns)%meshfile), &
         stream_filenames = filelist, &
