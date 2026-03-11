@@ -1,57 +1,14 @@
 [ccpp-table-properties]
-  name = CCPP_NUOPC_Cap
+  name = ccpp_nuopc_cap
   type = module
-  dependencies = ccpp_internal_state.F90
+  dependencies = ccpp_data_mod.F90
 
 [ccpp-arg-table]
-  name = CCPP_NUOPC_Cap
+  name = ccpp_nuopc_cap
   type = module
-[air_temperature]
-  standard_name = air_temperature
-  long_name = Air temperature
-  units = K
-  dimensions = (horizontal_loop_extent, vertical_dimension)
-  type = real
-  kind = kind_phys
-[air_pressure]
-  standard_name = air_pressure
-  long_name = Air pressure
-  units = Pa
-  dimensions = (horizontal_loop_extent, vertical_dimension)
-  type = real
-  kind = kind_phys
-[specific_humidity]
-  standard_name = specific_humidity
-  long_name = Specific humidity
-  units = kg/kg
-  dimensions = (horizontal_loop_extent, vertical_dimension)
-  type = real
-  kind = kind_phys
-[precipitation_rate]
-  standard_name = precipitation_rate
-  long_name = Precipitation rate
-  units = kg/m^2/s
-  dimensions = (horizontal_loop_extent, vertical_dimension)
-  type = real
-  kind = kind_phys
-[ncol]
-  standard_name = horizontal_loop_extent
-  long_name = Number of columns in current block
-  units = count
+[cdata]
+  standard_name = ccpp_t_instance
+  long_name = ccpp handle
+  units = DDT
   dimensions = ()
-  type = integer
-  kind = kind_int
-[ncol_all]
-  standard_name = horizontal_dimension
-  long_name = Total number of columns
-  units = count
-  dimensions = ()
-  type = integer
-  kind = kind_int
-[nlev]
-  standard_name = vertical_dimension
-  long_name = Number of vertical levels
-  units = count
-  dimensions = ()
-  type = integer
-  kind = kind_int
+  type = ccpp_t

@@ -1,13 +1,15 @@
 module ccpp_internal_state_mod
   use ESMF
   use, intrinsic :: iso_c_binding
+#ifdef USE_REAL_CCPP
+  use ccpp_types, only: ccpp_t
+#endif
   implicit none
 
   ! Kind parameters for CCPP consistency
   integer, parameter :: kind_phys = c_double
   integer, parameter :: kind_int  = c_int
 
-  ! Preprocessor-guarded mock for standalone development/CI
 #ifndef USE_REAL_CCPP
   type ccpp_t
      integer(kind_int)    :: errflg
@@ -61,6 +63,8 @@ contains
     character(*), intent(in)    :: suite_name
     character(*), intent(in), optional :: group_name
     integer(kind_int), intent(out) :: ierr
+    ccpp_state%errflg = 0_kind_int
+    ccpp_state%errmsg = ""
     ierr = 0_kind_int
   end subroutine ccpp_physics_init
 
@@ -102,7 +106,6 @@ contains
     rc = 0_kind_int
   end subroutine ccpp_finalize
 
-  ! Maintain ccpp_field_add for backward compatibility or dynamic mapping
   subroutine ccpp_field_add(ccpp_state, name, var, rc)
     type(ccpp_t), intent(inout) :: ccpp_state
     character(*), intent(in)    :: name

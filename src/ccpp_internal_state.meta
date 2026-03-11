@@ -1,0 +1,54 @@
+[ccpp-table-properties]
+  name = ccpp_internal_state_type
+  type = ddt
+  dependencies =
+
+[ccpp-arg-table]
+  name = ccpp_internal_state_type
+  type = ddt
+[temp]
+  standard_name = air_temperature
+  long_name = Air temperature
+  units = K
+  dimensions = (horizontal_dimension, vertical_dimension)
+  type = real
+  kind = kind_phys
+[pres]
+  standard_name = air_pressure
+  long_name = Air pressure
+  units = Pa
+  dimensions = (horizontal_dimension, vertical_dimension)
+  type = real
+  kind = kind_phys
+[q]
+  standard_name = specific_humidity
+  long_name = Specific humidity
+  units = kg kg-1
+  dimensions = (horizontal_dimension, vertical_dimension)
+  type = real
+  kind = kind_phys
+[rain]
+  standard_name = precipitation_rate
+  long_name = Precipitation rate
+  units = kg m-2 s-1
+  dimensions = (horizontal_dimension, vertical_dimension)
+  type = real
+  kind = kind_phys
+[ncol]
+  standard_name = horizontal_loop_extent
+  long_name = Number of columns in current block
+  units = count
+  dimensions = ()
+  type = integer
+[ncol_all]
+  standard_name = horizontal_dimension
+  long_name = Total number of columns
+  units = count
+  dimensions = ()
+  type = integer
+[nlev]
+  standard_name = vertical_dimension
+  long_name = Number of vertical levels
+  units = count
+  dimensions = ()
+  type = integer

@@ -1,0 +1,60 @@
+[ccpp-table-properties]
+  name = sample_scheme
+  type = scheme
+
+[ccpp-arg-table]
+  name = sample_scheme_run
+  type = scheme
+[ncol]
+  standard_name = horizontal_loop_extent
+  long_name = Number of columns
+  units = count
+  dimensions = ()
+  type = integer
+[nlev]
+  standard_name = vertical_dimension
+  long_name = Number of levels
+  units = count
+  dimensions = ()
+  type = integer
+[temp]
+  standard_name = air_temperature
+  long_name = temperature
+  units = K
+  dimensions = (horizontal_dimension, vertical_dimension)
+  type = real
+  kind = kind_phys
+[pres]
+  standard_name = air_pressure
+  long_name = pressure
+  units = Pa
+  dimensions = (horizontal_dimension, vertical_dimension)
+  type = real
+  kind = kind_phys
+[q]
+  standard_name = specific_humidity
+  long_name = humidity
+  units = kg kg-1
+  dimensions = (horizontal_dimension, vertical_dimension)
+  type = real
+  kind = kind_phys
+[rain]
+  standard_name = precipitation_rate
+  long_name = rain
+  units = kg m-2 s-1
+  dimensions = (horizontal_dimension, vertical_dimension)
+  type = real
+  kind = kind_phys
+[errflg]
+  standard_name = ccpp_error_code
+  long_name = error flag
+  units = 1
+  dimensions = ()
+  type = integer
+[errmsg]
+  standard_name = ccpp_error_message
+  long_name = error message
+  units = none
+  dimensions = ()
+  type = character
+  kind = len=*
