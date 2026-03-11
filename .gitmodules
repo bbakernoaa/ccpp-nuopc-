@@ -1,0 +1,6 @@
+[submodule "src/ccpp-framework"]
+	path = src/ccpp-framework
+	url = https://github.com/ncar/ccpp-framework
+[submodule "src/ccpp-physics"]
+	path = src/ccpp-physics
+	url = https://github.com/ufs-community/ccpp-physics

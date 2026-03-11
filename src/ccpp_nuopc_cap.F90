@@ -110,12 +110,9 @@ contains
 
     type(ccpp_internal_state_type), pointer :: state
     type(ESMF_State) :: importState, exportState
-    type(ESMF_Clock) :: clock
     type(ESMF_Field) :: field
-    type(ESMF_VM)    :: vm
     integer :: counts(2)
     integer(kind_int) :: ccpp_rc
-    integer :: mytask
 
     rc = ESMF_SUCCESS
     call ESMF_GridCompGetInternalState(gcomp, state, rc=rc)
@@ -125,13 +122,6 @@ contains
     ! Create grid
     counts = (/ int(state%ncol), int(state%nlev) /)
     state%grid = ESMF_GridCreate(maxIndex=counts, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, file=__FILE__)) return
-
-    ! Create mesh for CDEPS integration
-    state%mesh = ESMF_MeshCreate(parametricDim=1, spatialDim=1, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, file=__FILE__)) return
 
     call NUOPC_ModelGet(gcomp, importState=importState, exportState=exportState, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -152,6 +142,11 @@ contains
     ! Initialize CCPP framework
     call ccpp_init(state%ccpp_state, "my_physics_suite", ccpp_rc)
 
+    ! Create mesh for CDEPS integration
+    state%mesh = ESMF_MeshCreate(parametricDim=1, spatialDim=1, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=__FILE__)) return
+
     ! Initialize CCPP physics
     call ccpp_physics_init(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
     if (ccpp_rc /= 0_kind_int) then
@@ -160,6 +155,9 @@ contains
     end if
 
     ! Get clock and VM from component
+    type(ESMF_Clock) :: clock
+    type(ESMF_VM)    :: vm
+    integer :: mytask
     call ESMF_GridCompGet(gcomp, clock=clock, vm=vm, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
@@ -191,7 +189,6 @@ contains
     type(ESMF_Clock) :: clock
     type(ESMF_Field) :: field
     integer(kind_int) :: ccpp_rc
-    integer :: thrd_no
 
     rc = ESMF_SUCCESS
     call ESMF_GridCompGetInternalState(gcomp, state, rc=rc)
@@ -218,7 +215,6 @@ contains
     ! Execute CCPP Run phases
     call ccpp_physics_timestep_init(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
     if (ccpp_rc == 0_kind_int) then
-      ! For now, call physics serially to ensure correctness and avoid race conditions
       call ccpp_physics_run(state%ccpp_state, suite_name="my_physics_suite", ierr=ccpp_rc)
     end if
     if (ccpp_rc == 0_kind_int) then

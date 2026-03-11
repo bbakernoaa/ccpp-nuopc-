@@ -13,42 +13,35 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Cache dependencies and build
-      uses: actions/cache@v3
       with:
-        path: |
-          build/_deps
-          build/lib
-          build/bin
-        key: ${{ runner.os }}-ccpp-deps-${{ hashFiles('**/CMakeLists.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-ccpp-deps-
+        submodules: recursive
 
     - name: Build and Syntax Check
       shell: bash
       run: |
+        # Activate the Spack environment if present in the JCSDA container
         if [ -f /opt/spack-environment/activate.sh ]; then
           source /opt/spack-environment/activate.sh
         fi
 
+        # Load necessary modules (Spack handles ESMF and CCPP in this stack)
         if command -v spack &> /dev/null; then
-          spack install cdeps || true
-          spack load esmf ccpp-framework parallelio netcdf-c netcdf-fortran cdeps || true
-        fi
+          spack load esmf || true
+          spack load ccpp-framework || true
 
-        # Ensure build directory exists
-        mkdir -p build
-        cd build
-
-        # Set paths from Spack if available
-        if command -v spack &> /dev/null; then
           ESMF_PATH=$(spack location -i esmf)
+          echo "ESMF installed at: $ESMF_PATH"
           export CMAKE_PREFIX_PATH=$ESMF_PATH:$CMAKE_PREFIX_PATH
         fi
 
-        # Configure and Build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
-        make -j$(nproc) VERBOSE=1
+        echo "Verifying file existence and structure..."
+        ls -R src/
 
-        echo "CI build complete."
+        echo "Configuring and Building with CMake..."
+        mkdir build
+        cd build
+        # Pass CMAKE_PREFIX_PATH and enable verbose output
+        cmake .. -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH
+        make VERBOSE=1
+
+        echo "CI build complete via CMake."
