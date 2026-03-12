@@ -27,7 +27,7 @@ contains
     character(*), intent(in)           :: suite_name
     integer, intent(out)               :: rc
 
-    type(ccpp_internal_state_type), pointer :: istate
+    type(ccpp_internal_state_type), pointer :: istate => null()
     integer(kind_int) :: ierr
 
     rc = 0
@@ -38,8 +38,17 @@ contains
 #endif
 
     ! Set module-level pointer
-    state => istate
-    cdata => state%ccpp_state
+    if (associated(istate)) then
+       state => istate
+       cdata => state%ccpp_state
+    else
+       ! In mock mode, we assume 'state' is already set by the test or caller
+       if (.not. associated(state)) then
+          rc = 1
+          return
+       end if
+       cdata => state%ccpp_state
+    end if
 
     ! Initialize CCPP handle and suite
     call ccpp_init(cdata, suite_name, ierr)
@@ -79,7 +88,7 @@ contains
     character(*), intent(in)           :: group_name
     integer, intent(out)               :: rc
 
-    type(ccpp_internal_state_type), pointer :: istate
+    type(ccpp_internal_state_type), pointer :: istate => null()
 #ifdef USE_REAL_CCPP
     type(ESMF_Field) :: field
 #endif
@@ -93,8 +102,16 @@ contains
 #endif
 
     ! Set module-level pointer for the framework to access via 'state%var'
-    state => istate
-    cdata => state%ccpp_state
+    if (associated(istate)) then
+       state => istate
+       cdata => state%ccpp_state
+    else
+       if (.not. associated(state)) then
+          rc = 1
+          return
+       end if
+       cdata => state%ccpp_state
+    end if
 
     ! Unified interface: Ingest ESMF importState AND exportState fields
     ! MANDATORY: All pointers must be mapped BEFORE physics run
@@ -144,7 +161,7 @@ contains
     character(*), intent(in)           :: suite_name
     integer, intent(out)               :: rc
 
-    type(ccpp_internal_state_type), pointer :: istate
+    type(ccpp_internal_state_type), pointer :: istate => null()
     integer(kind_int) :: ierr
 
     rc = 0
@@ -154,8 +171,16 @@ contains
       line=__LINE__, file=__FILE__)) return
 #endif
 
-    state => istate
-    cdata => state%ccpp_state
+    if (associated(istate)) then
+       state => istate
+       cdata => state%ccpp_state
+    else
+       if (.not. associated(state)) then
+          rc = 1
+          return
+       end if
+       cdata => state%ccpp_state
+    end if
 
     ! Finalize physics and CCPP framework
     call ccpp_physics_finalize(cdata, suite_name=suite_name, ierr=ierr)

@@ -181,7 +181,9 @@ endif()
 target_link_libraries(ccpp_driver_mod PUBLIC ccpp_static_api)
 
 # Unit test
+add_executable(test_ccpp_driver src/test_ccpp_driver.F90)
+target_link_libraries(test_ccpp_driver ccpp_driver_mod ccpp_data_mod ccpp_internal_state ccpp_static_api)
 if (ESMF_FOUND)
-    add_executable(test_ccpp_driver src/test_ccpp_driver.F90)
     target_link_libraries(test_ccpp_driver ccpp_nuopc_cap ESMF::ESMF)
+    target_compile_definitions(test_ccpp_driver PUBLIC USE_REAL_CCPP)
 endif()

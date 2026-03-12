@@ -1,7 +1,9 @@
 module CCPP_NUOPC_Cap
+#ifdef USE_REAL_CCPP
   use ESMF
   use NUOPC
   use NUOPC_Model, modelSS => SetServices
+#endif
   use, intrinsic :: iso_c_binding
   use ccpp_internal_state_mod
   use ccpp_inline_cdeps_mod
@@ -9,16 +11,20 @@ module CCPP_NUOPC_Cap
   implicit none
 
   public SetServices
-  public Advertise, Realize, ModelAdvance, Finalize
+  public Advertise, Realize, ModelAdvance, DataInitialize, Finalize
 
 contains
 
   subroutine SetServices(gcomp, rc)
+#ifdef USE_REAL_CCPP
     type(ESMF_GridComp)  :: gcomp
+#else
+    integer              :: gcomp
+#endif
     integer, intent(out) :: rc
 
-    rc = ESMF_SUCCESS
-
+    rc = 0
+#ifdef USE_REAL_CCPP
     ! Register NUOPC specialized methods
     call NUOPC_CompDerive(gcomp, modelSS, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -48,22 +54,30 @@ contains
       specRoutine=Finalize, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
+#endif
 
   end subroutine SetServices
 
   subroutine Advertise(gcomp, rc)
+#ifdef USE_REAL_CCPP
     type(ESMF_GridComp)  :: gcomp
+#else
+    integer              :: gcomp
+#endif
     integer, intent(out) :: rc
 
+#ifdef USE_REAL_CCPP
     type(ESMF_State) :: importState, exportState
-    type(ccpp_internal_state_type), pointer :: state
     type(ESMF_Config) :: config
+#endif
+    type(ccpp_internal_state_type), pointer :: state
 
-    rc = ESMF_SUCCESS
+    rc = 0
 
     ! Allocate and set internal state
     allocate(state)
 
+#ifdef USE_REAL_CCPP
     ! Retrieve dimensions from ESMF gridded component configuration
     call ESMF_GridCompGet(gcomp, config=config, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -103,14 +117,20 @@ contains
     call NUOPC_Advertise(importState, StandardName="air_pressure", rc=rc)
     call NUOPC_Advertise(exportState, StandardName="specific_humidity", rc=rc)
     call NUOPC_Advertise(exportState, StandardName="precipitation_rate", rc=rc)
+#endif
 
   end subroutine Advertise
 
   subroutine Realize(gcomp, rc)
+#ifdef USE_REAL_CCPP
     type(ESMF_GridComp)  :: gcomp
+#else
+    integer              :: gcomp
+#endif
     integer, intent(out) :: rc
 
     type(ccpp_internal_state_type), pointer :: state
+#ifdef USE_REAL_CCPP
     type(ESMF_State) :: importState, exportState
     type(ESMF_Field) :: field
     type(ESMF_Clock) :: clock
@@ -142,9 +162,11 @@ contains
 
     field = ESMF_FieldCreate(state%grid, typekind=ESMF_TYPEKIND_R8, name="precipitation_rate", rc=rc)
     call NUOPC_Realize(exportState, field=field, rc=rc)
+#endif
 
     ! Initialize CCPP via unified driver
     call ccpp_driver_init(gcomp, suite_name="my_physics_suite", rc=rc)
+#ifdef USE_REAL_CCPP
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
 
@@ -167,19 +189,29 @@ contains
     call ccpp_inline_init(gcomp, clock, state%mesh, mytask, rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
+#endif
 
   end subroutine Realize
 
   subroutine DataInitialize(gcomp, rc)
+#ifdef USE_REAL_CCPP
     type(ESMF_GridComp)  :: gcomp
+#else
+    integer              :: gcomp
+#endif
     integer, intent(out) :: rc
-    rc = ESMF_SUCCESS
+    rc = 0
   end subroutine DataInitialize
 
   subroutine ModelAdvance(gcomp, rc)
+#ifdef USE_REAL_CCPP
     type(ESMF_GridComp)  :: gcomp
+#else
+    integer              :: gcomp
+#endif
     integer, intent(out) :: rc
 
+#ifdef USE_REAL_CCPP
     type(ESMF_State) :: importState, exportState
     type(ESMF_Clock) :: clock
 
@@ -187,10 +219,6 @@ contains
     call ESMF_GridCompGet(gcomp, importState=importState, exportState=exportState, clock=clock, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
-
-!> \section arg_table_CCPP_NUOPC_Cap Argument Table
-!! \htmlinclude CCPP_NUOPC_Cap.html
-!!
 
     ! Execute CCPP via unified driver
     call ccpp_driver_run(gcomp, importState, exportState, suite_name="my_physics_suite", group_name="physics", rc=rc)
@@ -201,22 +229,34 @@ contains
     call ccpp_inline_run(clock, rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
+#else
+    rc = 0
+    ! In mock mode, we can't easily call ccpp_driver_run without handles
+#endif
 
   end subroutine ModelAdvance
 
   subroutine Finalize(gcomp, rc)
+#ifdef USE_REAL_CCPP
     type(ESMF_GridComp)  :: gcomp
+#else
+    integer              :: gcomp
+#endif
     integer, intent(out) :: rc
     type(ccpp_internal_state_type), pointer :: state
 
-    rc = ESMF_SUCCESS
+    rc = 0
+#ifdef USE_REAL_CCPP
     call ESMF_GridCompGetInternalState(gcomp, state, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, file=__FILE__)) return
+#endif
 
     call ccpp_driver_finalize(gcomp, suite_name="my_physics_suite", rc=rc)
+#ifdef USE_REAL_CCPP
     call ESMF_GridDestroy(state%grid, rc=rc)
     call ESMF_MeshDestroy(state%mesh, rc=rc)
+#endif
     deallocate(state)
   end subroutine Finalize
 

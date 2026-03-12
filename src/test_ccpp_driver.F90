@@ -1,53 +1,57 @@
 program test_ccpp_driver
-  use ESMF
-  use NUOPC
-  use CCPP_NUOPC_Cap
+  use, intrinsic :: iso_c_binding
+  use ccpp_internal_state_mod
+  use ccpp_driver_mod
   implicit none
 
-  type(ESMF_GridComp) :: gcomp
-  type(ESMF_State)    :: importState, exportState
-  type(ESMF_Clock)    :: clock
-  type(ESMF_Time)     :: start_time, stop_time
-  type(ESMF_TimeInterval) :: time_step
-  type(ESMF_Config)   :: config
   integer :: rc
+  integer :: gcomp = 0
+  integer :: importState = 0
+  integer :: exportState = 0
+  type(ccpp_internal_state_type), pointer :: state
 
-  call ESMF_Initialize(vmLocalMode=ESMF_VMLOCALMODE_DEFAULT, rc=rc)
+  print *, "CCPP Driver unit test starting..."
 
-  gcomp = ESMF_GridCompCreate(name="CCPP_Cap", rc=rc)
+  ! Initialize internal state
+  allocate(state)
+  state%ncol = 10
+  state%nlev = 20
 
-  ! Create and set configuration
-  config = ESMF_ConfigCreate(rc=rc)
-  call ESMF_ConfigSetAttribute(config, value=10, label="ncol", rc=rc)
-  call ESMF_ConfigSetAttribute(config, value=20, label="nlev", rc=rc)
-  call ESMF_ConfigSetAttribute(config, value=10, label="ncol_all", rc=rc)
-  call ESMF_GridCompSet(gcomp, config=config, rc=rc)
+  ! In mock mode, we manually set the global pointer that the driver expects
+  ! Normally this is done in the Advertise/Realize phase of the cap
+  call test_init_ccpp_data(state)
 
-  ! Initialize component
-  call ESMF_GridCompSetServices(gcomp, SetServices, rc=rc)
-
-  ! Setup clock
-  call ESMF_TimeSet(start_time, yy=2024, mm=1, dd=1, rc=rc)
-  call ESMF_TimeSet(stop_time, yy=2024, mm=1, dd=1, h=1, rc=rc)
-  call ESMF_TimeIntervalSet(time_step, s=1800, rc=rc)
-  clock = ESMF_ClockCreate(timeStep=time_step, startTime=start_time, stopTime=stop_time, rc=rc)
-  call ESMF_GridCompSet(gcomp, clock=clock, rc=rc)
-
-  ! Advertise and Realize
-  call Advertise(gcomp, rc)
-
-  call Realize(gcomp, rc)
-
-  ! Run one step
-  call ModelAdvance(gcomp, rc)
-
-  if (rc == ESMF_SUCCESS) then
-     print *, "CCPP Driver unit test PASSED"
-  else
-     print *, "CCPP Driver unit test FAILED"
+  ! Test Driver Init
+  call ccpp_driver_init(gcomp, "my_physics_suite", rc)
+  if (rc /= 0) then
+     print *, "Driver Init FAILED"
+     stop 1
   end if
 
-  call ESMF_GridCompDestroy(gcomp, rc=rc)
-  call ESMF_Finalize(rc=rc)
+  ! Test Driver Run
+  call ccpp_driver_run(gcomp, importState, exportState, "my_physics_suite", "physics", rc)
+  if (rc /= 0) then
+     print *, "Driver Run FAILED"
+     stop 1
+  end if
+
+  ! Test Driver Finalize
+  call ccpp_driver_finalize(gcomp, "my_physics_suite", rc)
+  if (rc /= 0) then
+     print *, "Driver Finalize FAILED"
+     stop 1
+  end if
+
+  print *, "CCPP Driver unit test PASSED"
+  deallocate(state)
+
+contains
+
+  subroutine test_init_ccpp_data(istate)
+    use ccpp_data_mod, only: state, cdata
+    type(ccpp_internal_state_type), pointer :: istate
+    state => istate
+    cdata => istate%ccpp_state
+  end subroutine test_init_ccpp_data
 
 end program test_ccpp_driver

@@ -6,17 +6,12 @@ VARIABLE_DEFINITION_FILES = [
     'src/ccpp-framework/src/ccpp_types.F90',
     'src/ccpp_internal_state.F90',
     'src/ccpp_data_mod.F90',
-    'src/ccpp_nuopc_cap.F90',
     ]
 
 TYPEDEFS_NEW_METADATA = {
     'ccpp_types' : {
         'ccpp_types' : '',
         'ccpp_t' : 'cdata',
-        },
-    'ccpp_data_mod' : {
-        'ccpp_data_mod' : '',
-        'ccpp_internal_state_type' : 'state',
         },
     }
 

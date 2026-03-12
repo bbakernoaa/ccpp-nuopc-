@@ -9,6 +9,10 @@ module ccpp_data_mod
   private
   public :: state, cdata
 
+!> \section arg_table_ccpp_data_mod Argument Table
+!! \htmlinclude ccpp_data_mod.html
+!!
+
   ! Pointer to the internal state instance currently being processed
   ! This allows CCPP to access variables via 'state%var'
   type(ccpp_internal_state_type), pointer :: state => null()

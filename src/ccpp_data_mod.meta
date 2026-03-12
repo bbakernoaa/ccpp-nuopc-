@@ -1,14 +1,13 @@
 [ccpp-table-properties]
   name = ccpp_data_mod
   type = module
-  dependencies = ccpp_internal_state.F90
 
 [ccpp-arg-table]
   name = ccpp_data_mod
   type = module
-[state]
-  standard_name = ccpp_internal_state
-  long_name = pointer to internal state
+[cdata]
+  standard_name = ccpp_t_instance
+  long_name = ccpp handle instance
   units = DDT
   dimensions = ()
-  type = ccpp_internal_state_type
+  type = ccpp_t
