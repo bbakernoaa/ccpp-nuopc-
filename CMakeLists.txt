@@ -121,6 +121,9 @@ if (ESMF_FOUND)
     target_link_libraries(ccpp_internal_state PUBLIC ESMF::ESMF)
     target_compile_definitions(ccpp_internal_state PUBLIC USE_REAL_CCPP)
 endif()
+if (TARGET ccpp_framework)
+    target_link_libraries(ccpp_internal_state PUBLIC ccpp_framework)
+endif()
 target_include_directories(ccpp_internal_state PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 # Add CCPP data module

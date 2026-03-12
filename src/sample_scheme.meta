@@ -21,28 +21,28 @@
   standard_name = air_temperature
   long_name = temperature
   units = K
-  dimensions = (horizontal_dimension, vertical_dimension)
+  dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_phys
 [pres]
   standard_name = air_pressure
   long_name = pressure
   units = Pa
-  dimensions = (horizontal_dimension, vertical_dimension)
+  dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_phys
 [q]
   standard_name = specific_humidity
   long_name = humidity
   units = kg kg-1
-  dimensions = (horizontal_dimension, vertical_dimension)
+  dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_phys
 [rain]
   standard_name = precipitation_rate
   long_name = rain
   units = kg m-2 s-1
-  dimensions = (horizontal_dimension, vertical_dimension)
+  dimensions = (horizontal_loop_extent, vertical_dimension)
   type = real
   kind = kind_phys
 [errflg]
