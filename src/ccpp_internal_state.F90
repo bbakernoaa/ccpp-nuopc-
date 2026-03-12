@@ -5,6 +5,16 @@ module ccpp_internal_state_mod
   use ccpp_types, only: ccpp_t
 #endif
   implicit none
+  private
+
+  public :: ccpp_internal_state_type
+  public :: kind_phys, kind_int
+#ifndef USE_REAL_CCPP
+  public :: ccpp_t
+  public :: ccpp_init, ccpp_physics_init, ccpp_physics_timestep_init, &
+            ccpp_physics_run, ccpp_physics_timestep_finalize, &
+            ccpp_physics_finalize, ccpp_finalize, ccpp_field_add
+#endif
 
   ! Kind parameters for CCPP consistency
   integer, parameter :: kind_phys = c_double
