@@ -8,7 +8,7 @@
   type = module
 [cdata]
   standard_name = ccpp_t_instance
-  long_name = ccpp handle
+  long_name = ccpp handle instance
   units = DDT
   dimensions = ()
   type = ccpp_t

@@ -12,9 +12,3 @@
   units = DDT
   dimensions = ()
   type = ccpp_internal_state_type
-[cdata]
-  standard_name = ccpp_t_instance
-  long_name = ccpp handle pointer
-  units = DDT
-  dimensions = ()
-  type = ccpp_t
